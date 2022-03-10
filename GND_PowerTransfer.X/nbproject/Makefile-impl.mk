@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=GND_Transfer.X
+PROJECTNAME=GND_PowerTransfer.X
 
 # Active Configuration
 DEFAULTCONF=default

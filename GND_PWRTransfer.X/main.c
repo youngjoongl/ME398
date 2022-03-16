@@ -60,7 +60,7 @@ void setup() {
     //TRISBbits.TRISB8 = 1; // B8 (switch 3) is an input pin
     //TRISBbits.TRISB9 = 1; // B9 (switch 4) is an input pin
     
-    // initialize transistor output 
+    // initialize IC enable output 
     TRISCbits.TRISC4 = 0; // C4 is an output pin (Enable input)
     LATCbits.LATC4 = 1;   // C4 is HIGH (High disable charger)
 
@@ -76,6 +76,8 @@ void setup() {
     //OC2R = 0;              // initialize before turning OC2 on; afterward it is read-only
     //T2CONbits.ON = 1;        // turn on Timer2
     //OC2CONbits.ON = 1;       // turn on OC2
+    
+
 }
 
 int main() {
@@ -95,28 +97,30 @@ int main() {
             
             if(PORTCbits.RC6 == 0 && PORTCbits.RC7 == 0) {  // check if all switches are low (pushed)
                 _CP0_SET_COUNT(0);
-                while(_CP0_GET_COUNT() < (48000000)) {    // wait for 2 sec
+                while(_CP0_GET_COUNT() < (48000000*4)) {    // wait for 2 sec
                     if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1) {   // if any switch is high, turn off output and break out from 2 second delay
                         int c = _CP0_GET_COUNT();
                         while(_CP0_GET_COUNT() < (c+((48000000/2)/10000))) {   // wait .1 ms to remove switch bounce
                         }
-                        LATCbits.LATC4 = 1; // Drive HIGH to disable the battery charger
-                        break;
+                        if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1) { // check again
+                            LATCbits.LATC4 = 1; // Drive HIGH to disable the battery charger
+                            break;
+                        }
                     }
                 }
                 if(PORTCbits.RC6 == 0 && PORTCbits.RC7 == 0) {  // if all switches are still low (pushed)
                     LATCbits.LATC4 = 0; // Drive Low to enable the battery charger
                 }
             }
-            else {
+            else {  // if all switches are not pushed
                 LATCbits.LATC4 = 1;
             }
         }
-        else {
+        else {  // if either switch is not pushed
             _CP0_SET_COUNT(0);
             while(_CP0_GET_COUNT() < ((48000000/2)/10000)) {   // wait .1 ms to remove switch bounce
             }
-            if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1){   // if switch is indeed high, turn off output
+            if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1){   // if switch is indeed high, turn off battery charger
                 LATCbits.LATC4 = 1;
             }
         }

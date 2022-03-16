@@ -48,34 +48,19 @@ void setup() {
     // disable JTAG to get pins back
     DDPCONbits.JTAGEN = 0;
 
-    // initialize microswitches
-    // switch configuration:
-    // 1--------2
-    // |        |
-    // |  ATAG  |
-    // |        |
-    // 4--------3
     TRISCbits.TRISC6 = 1; // C6 (switch 1) is an input pin
-    TRISCbits.TRISC7 = 1; // C7 (switch 2) is an input pin
+    //TRISCbits.TRISC7 = 1; // C7 (switch 2) is an input pin
     //TRISBbits.TRISB8 = 1; // B8 (switch 3) is an input pin
     //TRISBbits.TRISB9 = 1; // B9 (switch 4) is an input pin
     
-    // initialize transistor output 
-    TRISCbits.TRISC4 = 0; // C4 is an output pin (Enable input)
-    LATCbits.LATC4 = 1;   // C4 is HIGH (High disable charger)
+    // initialize output pins for LED
+    TRISAbits.TRISA4 = 0; // A4 is an output pin (LED power)
+    LATAbits.LATA4 = 1;   // A4 is HIGH (LED on)
+    
+    // Turn off charger
+    //TRISCbits.TRISC4 = 0; // C4 is an output pin (enable input)
+    //LATCbits.LATC4 = 1;   // C4 is HIGH (Disable charger)  
 
-    // initialize servo output
-    //RPB15Rbits.RPB15R = 0b0101; // A1 pin is set to OC2 
-    // use Timer 2 for servo PWM. Initialize output compare
-    // system clock runs at 48MHz. PWM Timer runs at 50Hz
-    //T2CONbits.TCKPS = 0b111;     // 1:256 timer input clock prescaler
-    //PR2 = 3749;              // PR = PBCLK / N / desired F - 1 = 48000000/256/50-1 = 3749
-    //TMR2 = 0;                // initial TMR2 count is 0
-    //OC2CONbits.OCM = 0b110;  // PWM mode without fault pin; other OC2CON bits are defaults
-    //OC2RS = 0;             // duty cycle = OC2RS/(PR2+1)
-    //OC2R = 0;              // initialize before turning OC2 on; afterward it is read-only
-    //T2CONbits.ON = 1;        // turn on Timer2
-    //OC2CONbits.ON = 1;       // turn on OC2
 }
 
 int main() {
@@ -88,36 +73,20 @@ int main() {
         // if all switches are low, set A0 to high and set OC2 duty cycle to 12.5%. Else, set OC2 duty cycle to 2.5% 
         // 24MHz core timer
         _CP0_SET_COUNT(0);
-        if(PORTCbits.RC6 == 0 && PORTCbits.RC7 == 0){ // pull-up resistor, to GND when button pushed
+        if(PORTCbits.RC6 == 0){ // pull-up resistor, to GND when button pushed
             _CP0_SET_COUNT(0);
             while(_CP0_GET_COUNT() < ((48000000/2)/10000)) {   // wait .1 ms to remove switch bounce
             }
-            
-            if(PORTCbits.RC6 == 0 && PORTCbits.RC7 == 0) {  // check if all switches are low (pushed)
-                _CP0_SET_COUNT(0);
-                while(_CP0_GET_COUNT() < (48000000)) {    // wait for 2 sec
-                    if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1) {   // if any switch is high, turn off output and break out from 2 second delay
-                        int c = _CP0_GET_COUNT();
-                        while(_CP0_GET_COUNT() < (c+((48000000/2)/10000))) {   // wait .1 ms to remove switch bounce
-                        }
-                        LATCbits.LATC4 = 1; // Drive HIGH to disable the battery charger
-                        break;
-                    }
-                }
-                if(PORTCbits.RC6 == 0 && PORTCbits.RC7 == 0) {  // if all switches are still low (pushed)
-                    LATCbits.LATC4 = 0; // Drive Low to enable the battery charger
-                }
-            }
-            else {
-                LATCbits.LATC4 = 1;
+            if(PORTCbits.RC6 == 0){
+                LATAbits.LATA4 = 1;   // Turn on LED
             }
         }
-        else {
+        else {  // if either switch is not pushed
             _CP0_SET_COUNT(0);
             while(_CP0_GET_COUNT() < ((48000000/2)/10000)) {   // wait .1 ms to remove switch bounce
             }
-            if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1){   // if switch is indeed high, turn off output
-                LATCbits.LATC4 = 1;
+            if(PORTCbits.RC6 == 1){   // if switch is indeed high, turn off battery charger
+                LATAbits.LATA4 = 1;   // Turn on LED
             }
         }
     }

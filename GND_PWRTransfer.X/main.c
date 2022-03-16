@@ -97,7 +97,7 @@ int main() {
             
             if(PORTCbits.RC6 == 0 && PORTCbits.RC7 == 0) {  // check if all switches are low (pushed)
                 _CP0_SET_COUNT(0);
-                while(_CP0_GET_COUNT() < (48000000*4)) {    // wait for 2 sec
+                while(_CP0_GET_COUNT() < (48000000*2)) {    // wait for 4 sec
                     if(PORTCbits.RC6 == 1 || PORTCbits.RC7 == 1) {   // if any switch is high, turn off output and break out from 2 second delay
                         int c = _CP0_GET_COUNT();
                         while(_CP0_GET_COUNT() < (c+((48000000/2)/10000))) {   // wait .1 ms to remove switch bounce
